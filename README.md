@@ -1,0 +1,1 @@
+# Building-a-SOC-Automation-for-Mimikatz-Detection
