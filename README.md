@@ -35,11 +35,7 @@ To begin, we log in to DigitalOcean and create a new Droplet.
 Next, we are going to setup firewall for our Wazuh manager machine. To do this, click on **Networking** in the Manage menu on the left hand side, then select **Firewalls** tab, **Create Firewall**. I name this firewall as Firewall. The inbound rules for this firewall is only allowing incoming traffic from our public IP. So, the configuration for this firewall would be as following:
 
 <p align="center">
-  <img src="./images/digital-ocean-create-firewall.png" style="width: 80%;">
-</p>
-
-<p align="center">
-  <img src="./images/digital-ocean-create-firewall.png" style="width: 80%;">
+  <img src="./images/create-firewall.jpg" style="width: 80%;">
 </p>
 
 Then, we add our Wazuh Server machine to this Firewall by click on Add Droplets, type Wazuh at the input box, and click Add Droplet. For now, our Wazuh server has been protected by the firewall.
