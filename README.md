@@ -1,4 +1,4 @@
-# Building a SOC Automation for Mimikatz Detection
+# SOC Automation Project
 This project outlines the construction of a home-based **Security Operations Center (SOC)** lab, focused on automating the detection of the Mimikatz credential-stealing tool. Mimikatz is a popular post-exploitation tool used by attackers to extract passwords, hashes, PINs, and Kerberos tickets from memory. By automating its detection, we can enhance our security posture and gain valuable experience in SOC automation techniques.
 
 This project was inspired by the tutorial videos by MyDFIR on YouTube, and it aims to provide a comprehensive guide to building an automated SOC environment. In this project, we will walk you through the process of setting up and configuring these tools to detect Mimikatz activity and trigger a series of actions, including sending alerts and emails to security analysts.
