@@ -228,18 +228,23 @@ Configure Elasticsearch by editing the **elasticsearch.yml** file:
 nano /etc/elasticsearch/elasticsearch.yml
 ```
 In this file, we change the `cluster.name` to **Thehive**
-- cluster.name: thehive
-- and uncomment node.name
-- node.name: node-1
+
+`cluster.name: thehive`
+and uncomment node.name
+
+`node.name: node-1`
 
 We also uncomment **network.host** and change the value into public IP of our TheHive machine
-- network.host: 138.197.159.40
+
+`network.host: 138.197.159.40`
 
 Next, we uncomment **http.port**
-http.port: 9200
+
+`http.port: 9200`
 
 We also uncomment `cluster.initial_master_nodes` and remove `node-2` as we do not have a second node
-- cluster.initial_master_nodes:L ["node-1"]
+
+`cluster.initial_master_nodes:L ["node-1"]`
 
 After these changes, we start the service
 ```sh
@@ -273,7 +278,7 @@ ls -la /opt/thp
 and we can see TheHive users and TheHive group have the permission here:
 
 <p align="center">
-  <img src="./images/thehive-change-permission.jpg" style="width: 80%;">
+  <img src="./images/thehive-change-permission.jpg" style="width: 60%;">
 </p>
 
 To start configuring TheHive, we need to modify the file **application.conf**. Let us open it:
@@ -329,7 +334,7 @@ Drag and drop **Webhook** node into the main window and name it as **Wazuh-alert
 Then, click on Change Me node, choose **Repeat back to me** at **Find Actions** drop down list and choose **Execution Argument** at **Call box**
 
 <p align="center">
-  <img src="./images/shuffle-change-me.jpg" style="width: 80%;">
+  <img src="./images/shuffle-change-me.jpg" style="width: 30%;">
 </p>
 
 We save workflow by click on the save icon at the end of main window.
@@ -395,8 +400,21 @@ Next, on Windows 10 machine, go to folder **Downloads**, **extract all** file `m
 
 To make sure **Sysmon** is capturing Mimikatz, we open **Event Viewer** and navigate to **Applications and Services Logs/Microsoft/Windows/Sysmon/Operational**. We Look for `Event ID 1`, which indicates process creation.
 
+<p align="center">
+  <img src="./images/win10-eventviewer-mimikatz.jpg" style="width: 80%;">
+</p>
+
 At this time, we can head back to **Wazuh Manager** dashboard and search for `mimikatz` under `wazuh-archives-*` index. We can see we got two events, one with the event **ID 1** and the other one has event **ID 7**.
+
+<p align="center">
+  <img src="./images/wazuh-manager-search-mimikatz.jpg" style="width: 80%;">
+</p>
+
 Next we expand the event witht the event **ID 1** and take a look at the fields. We have a field called `OriginalFileName`. We will use this field to craft our alerts because if we use other fields such as `image`, the attacker can be simply rename mimikatz to anything else to bypass the alert
+
+<p align="center">
+  <img src="./images/wazuh-manager-expand-fields.jpg" style="width: 80%;">
+</p>
 
 #### 2.2 Creating a Custom Alert Rule 
 At dashboard home page, click to the dropdown menu next to the Wazuh icon, select **Management**, **Rules**, **manage rules files**. Because we are interested specifically in the event ID 1 for sysmon, we are going find for it, put `sysmon` in the search bar and we see file `0800-sysmon_id_1.xml`, click the icon view to view the content of this file. 
@@ -416,6 +434,10 @@ Once we've saved the `local_rules.xml` file, confirm the restart of the Wazuh ma
 
 Despite the name change, Wazuh will still generate an alert, demonstrating its ability to identify Mimikatz based on its original file name, even if an attacker attempts to disguise it.
 
+<p align="center">
+  <img src="./images/wazuh-manager-goodjob.jpg" style="width: 80%;">
+</p>
+
 ## 3. Automating Response Actions
 ### 3.1 Integrating with VirusTotal
 To further enrich our analysis of detected Mimikatz events, we'll integrate VirusTotal into our Shuffle workflow. VirusTotal analyzes files and URLs to detect malware and provides valuable information about their reputation.  
@@ -434,7 +456,16 @@ Drag and drop the **VirusTotal v3** app node into your workflow. Then, connect i
 
 #### 3.1.3 VirusTotal Authentication
 Navigate to VirusTotal website, login and get the **API key**
+
+<p align="center">
+  <img src="./images/virustotal-api-key.jpg" style="width: 80%;">
+</p>
+
 In our Shuffle workflow, click on **Authentication for the VirusTotal** node, paste our API key and submit. Now, whenever an alert is triggered, Shuffle will extract the SHA256 hash of the detected file and send it to VirusTotal for analysis. The results from VirusTotal will be included in the workflow data, providing valuable context for incident response. We specially focus on the attribute call last_analysis_stats which give us the important information about the hash.
+
+<p align="center">
+  <img src="./images/virustotal-last-analysis-stats.jpg" style="width: 80%;">
+</p>
 
 ### 3.2 Sending Alerts to TheHive
 To centralize our incident response and allow for collaborative investigation, we'll configure our Shuffle workflow to automatically create alerts in TheHive.
@@ -445,6 +476,10 @@ Within the organization, create two users. I my case, I create:
 - **martin** | martin@test.com | Type: Normal | Profile: Analyst , for manual interaction with TheHive.
 - **SOAR** | shuffle@test.com | Type: Service | Profile: Analyst, for Shuffle integration.
 
+<p align="center">
+  <img src="./images/thehive-create-users.jpg" style="width: 80%;">
+</p>
+
 Then, we create password for user martin and put the API key for user SOAR, when we see the API key, we should save it because we will use it to authenticate with Shuffle
 
 #### 3.2.2 Add TheHive Node to Shuffle
@@ -453,9 +488,21 @@ In our Shuffle workflow, drag and drop the **TheHive app** node into the workspa
 - **Find Actions**: Create alert
 Then, click on **Authentication for TheHive** and put the parameters which the apikey we got from user SOAR at previous step and The url is TheHive public IP address go along with port 9000. 
 
+<p align="center">
+  <img src="./images/thehive-authentication.jpg" style="width: 50%;">
+</p>
+
 We also put some parameter for TheHive
 
+<p align="center">
+  <img src="./images/shuffle-thehive-config.jpg" style="width: 50%;">
+</p>
+
 We need to allow TCP traffic inbound on port 9000. Therefore, go to the Firewall configution in DigitalOcean and add the **Inbound Rule** as following:
+
+<p align="center">
+  <img src="./images/digital-ocean-add-rule-firewall.jpg" style="width: 50%;">
+</p>
 
 With this configuration, whenever an alert is triggered in Wazuh and processed through Shuffle, a corresponding alert will be automatically created in TheHive. This allows analysts to efficiently manage, track, and investigate potential security incidents in a centralized platform.
 
@@ -463,7 +510,13 @@ With this configuration, whenever an alert is triggered in Wazuh and processed t
 To ensure timely awareness of potential security incidents, we'll configure email notifications in our Shuffle workflow. This will alert the SOC analyst whenever Mimikatz is detected.
 
 #### 3.3.1 Add Email Node:
-In your Shuffle workflow, drag and drop the **Email** node into the workspace and connect it after the Virustotal node. Configure Email Node:
+In your Shuffle workflow, drag and drop the **Email** node into the workspace and connect it after the Virustotal node. 
+
+<p align="center">
+  <img src="./images/shuffle-add-email.jpg" style="width: 50%;">
+</p>
+
+Configure Email Node:
 - **Name**: Send_email_notification
 - **Find Actions**: Send email shuffle
 - **Recipients**: [email address of SOC analyst]
@@ -474,7 +527,16 @@ Title: $exec.title
 Time: $exec.text.win.eventdata.utcTime
 Host: $exec.text.win.system.computer
 ```
+
+<p align="center">
+  <img src="./images/shuffle-email.jpg" style="width: 50%;">
+</p>
+
 With this configuration, an email notification will be sent to the designated SOC analyst whenever the workflow detects Mimikatz execution. This allows for immediate awareness and prompt response to potential threats. Now, we save the workflow and re run, then we go to our enail, and we will see the email from **shuffle.io**
+
+<p align="center">
+  <img src="./images/squarex-email.jpg" style="width: 50%;">
+</p>
 
 ## 4. Conclusion
 This project successfully demonstrates the construction of an automated SOC environment capable of detecting and responding to the execution of Mimikatz. By integrating Wazuh, Sysmon, TheHive, Shuffle, and VirusTotal, we've created a system that can effectively monitor for, analyze, and respond to security events.
