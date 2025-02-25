@@ -489,13 +489,13 @@ In our Shuffle workflow, drag and drop the **TheHive app** node into the workspa
 Then, click on **Authentication for TheHive** and put the parameters which the apikey we got from user SOAR at previous step and The url is TheHive public IP address go along with port 9000. 
 
 <p align="center">
-  <img src="./images/thehive-authentication.jpg" style="width: 50%;">
+  <img src="./images/thehive-authentication.jpg" style="width: 30%;">
 </p>
 
 We also put some parameter for TheHive
 
 <p align="center">
-  <img src="./images/shuffle-thehive-config.jpg" style="width: 50%;">
+  <img src="./images/shuffle-thehive-config.jpg" style="width: 30%;">
 </p>
 
 We need to allow TCP traffic inbound on port 9000. Therefore, go to the Firewall configution in DigitalOcean and add the **Inbound Rule** as following:
@@ -529,7 +529,7 @@ Host: $exec.text.win.system.computer
 ```
 
 <p align="center">
-  <img src="./images/shuffle-email.jpg" style="width: 50%;">
+  <img src="./images/shuffle-email.jpg" style="width: 30%;">
 </p>
 
 With this configuration, an email notification will be sent to the designated SOC analyst whenever the workflow detects Mimikatz execution. This allows for immediate awareness and prompt response to potential threats. Now, we save the workflow and re run, then we go to our enail, and we will see the email from **shuffle.io**
