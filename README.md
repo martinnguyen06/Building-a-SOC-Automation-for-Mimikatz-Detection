@@ -1,12 +1,16 @@
 # SOC Automation Project
-This project outlines the construction of a home-based **Security Operations Center (SOC)** lab, focused on automating the detection of the Mimikatz credential-stealing tool. Mimikatz is a popular post-exploitation tool used by attackers to extract passwords, hashes, PINs, and Kerberos tickets from memory. By automating its detection, we can enhance our security posture and gain valuable experience in SOC automation techniques.
 
-This project was inspired by the tutorial videos by MyDFIR on YouTube, and it aims to provide a comprehensive guide to building an automated SOC environment. In this project, we will walk you through the process of setting up and configuring these tools to detect Mimikatz activity and trigger a series of actions, including sending alerts and emails to security analysts.
+<p align="center">
+  <img src="./images/SOC-Automation-Project-banner.png" style="width: 80%;">
+</p>
+
+This project outlines the construction of a **Security Operations Center (SOC)** environment using industry-standard, free, and open-source tools. Participants will deploy a Windows virtual machine and configure it to forward critical security events to Wazuh, a security monitoring platform.  Furthermore, we'll integrate Shuffle, an automation framework, to enable automated incident response.  These automated responses will include enriching event data with threat intelligence from online sources, creating a documented record of the event within a case management system, and notifying security analysts via email. This comprehensive approach empowers analysts to effectively investigate and remediate security issues.
+
+This project was inspired by the tutorial videos by [MyDFIR](https://www.youtube.com/@MyDFIR). His videos are a great resource for anyone looking to learn practical cybersecurity skills, particularly in digital forensics and incident response.
 
 #### Skills Learned
 - Practical experience in building and configuring an automated SOC environment.
-- Proficiency in using open-source security tools like Wazuh, Sysmon
-- TheHive, Shuffle, and VirusTotal.
+- Proficiency in using open-source security tools like Wazuh, Sysmon, TheHive, Shuffle, and VirusTotal.
 - Ability to create custom rules and workflows for detecting and responding to Mimikatz attacks.
 - Understanding of incident response processes and the importance of SOC - automation.
 - Enhanced knowledge of cybersecurity threats and the tools and techniques used to mitigate them.
@@ -35,13 +39,17 @@ To begin, we log in to DigitalOcean and create a new Droplet.
 Next, we are going to setup firewall for our Wazuh manager machine. To do this, click on **Networking** in the Manage menu on the left hand side, then select **Firewalls** tab, **Create Firewall**. I name this firewall as Firewall. The inbound rules for this firewall is only allowing incoming traffic from our public IP. So, the configuration for this firewall would be as following:
 
 <p align="center">
-  <img src="./images/create-firewall.jpg" style="width: 80%;">
+  <img src="./images/digital-ocean-create-firewall.jpg" style="width: 80%;">
 </p>
 
 Then, we add our Wazuh Server machine to this Firewall by click on Add Droplets, type Wazuh at the input box, and click Add Droplet. For now, our Wazuh server has been protected by the firewall.
 
 #### Creating the TheHive VM
 Follow the same steps as above to create a new Droplet and name the hostname as Thehive. We also add the firewall we use with Wazuh Manager for this machine. After this process, we have two machines on cloud, one for Wazuh Manager and one for TheHive
+
+<p align="center">
+  <img src="./images/digital-ocean-two-machines.jpg" style="width: 80%;">
+</p>
 
 ### 1.2 Installing and Configuring Wazuh
 #### 1.2.1 Wazuh Manager
@@ -60,8 +68,16 @@ curl -sO https://packages.wazuh.com/4.7/wazuh-install.sh && sudo bash ./wazuh-in
 ```
 During the installation, if we are prompted to configure the Wazuh dashboard. Follow the on-screen instructions and choose the default options. Once the installation is complete, make note of the username and password provided. We will need these credentials to access the Wazuh dashboard
 
+<p align="center">
+  <img src="./images/user-and-pass-wazuh-manager.jpg" style="width: 80%;">
+</p>
+
 To access to the web interface, open the brower and go to the address:
-`https://wazuh-server-public-IP-address`. If we see the alert "Your connection is not private", click on Advance,  then Process and put our username and password and go to the Wazuh dashboard.
+`https://wazuh-server-public-IP-address`. If we see the alert "Your connection is not private", click on **Advance**,  then **Process** and put our *username* and *password* and go to the Wazuh dashboard.
+
+<p align="center">
+  <img src="./images/wazuh-manager-dashboard.jpg" style="width: 80%;">
+</p>
 
 #### Configuring ossec.conf file
 Wazuh by default does not log everything so we need to configure Wazuh to log Mimikatz by modify the Wazuh's configuration file, `ossec.conf`. on Linux, we can fint it at `/var/ossec/etc/ossec.conf`. Before making any change to this file, we should back up it. In the terminal, run the command:
@@ -75,6 +91,10 @@ nano /var/ossec/etc/ossec.conf
 ```
 We locate the `<logall>` and `<logall_json>` tags within the `<ossec_config>` section. Then, change the value of both tags to **yes** to enable full logging. 
 
+<p align="center">
+  <img src="./images/ossec-file-logall-logalljson.jpg" style="width: 80%;">
+</p>
+
 We now save `ossec.conf` file and restart the Wazuh manager service to apply the changes: systemctl restart wazuh-manager.service
 #### Configuring Filebeat
 Wazuh uses **Filebeat** to forward log data to **Elasticsearch**, which is where the Wazuh dashboard retrieves the data for analysis and visualization. To ensure our Wazuh archives are correctly indexed and searchable, we need to configure Filebeat. At the Wazuh Manager terminal, navigate to archives directory and open `filebeat.yml` configuration file
@@ -83,6 +103,10 @@ cd var/ossec/logs/archives
 nano /etc/filebeat/filebeat.yml
 ```
 Locate the `filebeat.modules` section and find the module named `wazuh`. Within the `wazuh module`, ensure that both alerts and archives are enabled by setting `enabled: true` for each.
+
+<p align="center">
+  <img src="./images/wazuh-manager-filebeat-archives.jpg" style="width: 80%;">
+</p>
 
 Save the `filebeat.yml` file and restart the Filebeat service to apply the changes:
 ```sh
@@ -101,13 +125,25 @@ Now, when we return to the Wazuh dashboard and select the `wazuh-archives-*` ind
 #### 1.2.2 Wazuh Agent - Windows 10 VM
 To add Windows 10 VM as our Wazuh agent, at Wazuh dashboard homepage, we click on the Add agent, the page Deploy new agent appear to show the steps to deploy a new agent. With `138.197.147.51` is my Wazuh server public IP and **martin** is the name of my Windows 10 machine, We put the options as following:
 
+<p align="center">
+  <img src="./images/wazuh-manager-deploy-new-agent.jpg" style="width: 50%;">
+</p>
+
 Then, we copy the command and open the PowerShelll as Administrator on Windows machine to run it.
+
+<p align="center">
+  <img src="./images/win10-new-agent-command.jpg" style="width: 80%;">
+</p>
 
 After the command is done installing we can then start the service by the command
 ```sh
 net start wazuhsvc
 ```
 Now we back to our Wazuh manager, close the **Deploy new agent** page and we can see now we have one agent and after a few second, refresh the page we can see the agent us active now.
+
+<p align="center">
+  <img src="./images/wazuh-manager-new-agent.jpg" style="width: 80%;">
+</p>
 
 ### 1.3 Installing and Configuring TheHive
 TheHive is a scalable open-source incident response platform that will enable us to efficiently manage and investigate the alerts generated by our SOC. In this section, we'll install and configure TheHive on our dedicated Ubuntu VM.
@@ -182,6 +218,10 @@ To make sure Cassandra is running, we can check it status:
 ```sh
 systemctl status cassandra.service
 ```
+<p align="center">
+  <img src="./images/thehive-cassandra.jpg" style="width: 80%;">
+</p>
+
 #### ElasticSearch
 Configure Elasticsearch by editing the **elasticsearch.yml** file:
 ```sh
@@ -213,6 +253,10 @@ and check it status:
 ```sh
 systemctl status elasticsearch.service
 ```
+<p align="center">
+  <img src="./images/thehive-elasticsearch.jpg" style="width: 80%;">
+</p>
+
 #### TheHive
 Next, we are going to configure TheHive. Before doing that, we need to make sure that TheHive users and group have access permission to a certain file path. Therefore, in TheHive terminal, run the command:
 ```sh
@@ -227,6 +271,10 @@ and now re check the access permission by:
 ls -la /opt/thp
 ```
 and we can see TheHive users and TheHive group have the permission here:
+
+<p align="center">
+  <img src="./images/thehive-change-permission.jpg" style="width: 80%;">
+</p>
 
 To start configuring TheHive, we need to modify the file **application.conf**. Let us open it:
 ```sh
@@ -244,6 +292,10 @@ and also check the status of the service
 systemctl status thehive.service
 ```
 Now we can access to TheHive by the navigating to the public IP of TheHive with port **9000** and use the default credential which is **'admin@thehive.local'** with a password of **'secret'**
+
+<p align="center">
+  <img src="./images/thehive-login-page.png" style="width: 80%;">
+</p>
 
 The important note here is if we can not login with default credential while Cassandra, Eleasticsearch, and TheHive are still running, we can handle the problem by creating a custom JVM option file under `/etc/elasticsearch/jvm.options.d`. The details is as folllowing, first, we create file jvm.options:
 ```sh
@@ -263,12 +315,28 @@ Finally, restart the Elasticsearch and try to login TheHive again.
 #### 1.5.1 Creating a Shuffle Workflow
 Go to **shuffle.io** and login, then select workflow on the left hand sid, then create new workflow with name is `SOC Automation Project` and usecases is `EDR to ticket`. Once a workflow is created, we will be presented with the following view:
 
+<p align="center">
+  <img src="./images/shuffle-first-view.jpg" style="width: 80%;">
+</p>
+
 #### 1.5.2 Configuring Webhooks and Actions
 Drag and drop **Webhook** node into the main window and name it as **Wazuh-alerts** and choose `Associated App`. We also connect this Webhook with the Change Me node.
 
-Then, click on Change Me node, choose Repeat back to me at Find Actions drop down list and choose Execution Argument at Call box
+<p align="center">
+  <img src="./images/shuffle-webhook.jpg" style="width: 80%;">
+</p>
+
+Then, click on Change Me node, choose **Repeat back to me** at **Find Actions** drop down list and choose **Execution Argument** at **Call box**
+
+<p align="center">
+  <img src="./images/shuffle-change-me.jpg" style="width: 80%;">
+</p>
 
 We save workflow by click on the save icon at the end of main window.
+
+<p align="center">
+  <img src="./images/shuffle-save-button.jpg" style="width: 50%;">
+</p>
 
 Now, we need to let Wazuh manager know that we are integrating with Shuffle. To do that, we open file `ossec.conf` file at Wazuh manager CLI and add the following configuration in between the `<ossec_config>` tag:
 ```xml
@@ -298,16 +366,32 @@ After backing up `occess.conf`, open it by Notepad with Administrator permission
 ```
 We also remove the `<localfile>` tag with the `<location>` tag value is **Security**. Then we save the file and restart Wazuh by go to services, right click Wazuh and restart. To check if our configuration is correct, go to Wazuh dashboard, under events, make sure we in alerts index and we can search for `sysmon`.
 
+<p align="center">
+  <img src="./images/wazuh-manager-sysmon-search.jpg" style="width: 80%;">
+</p>
+
 #### Download and execute Mimikatz
 Before downloading Mimikatz, we need to exclude the download path. To do that, open Windows Security, click on **dismiss** under **Virus & threat protection**, then double click on **Virus & threat protection**, seclect **Add or remove exclusions**, then Add an exclusion and choose Folder, then select **Download** folder.
 
-we also need to turn off the protection in our browser.
+<p align="center">
+  <img src="./images/win10-exclude-download-folder.jpg" style="width: 80%;">
+</p>
+
+We also need to turn off the protection in our browser.
 - For **Microsoft Edge**: open browser settings, navigate to **Privacy, search, and services**, and then under **Services**, toggle the **Microsoft Defender SmartScreen** option to off.
 - For **Google Chrome**: go to **Setting**, then **Privacy and security**, **Security**, select **No protection**
 
 To download Mimikatz, we go to [Mimikatz repository](https://github.com/gentilkiwi/mimikatz/releases), and download file `mimikatz_trunk.zip`
 
+<p align="center">
+  <img src="./images/win10-download-mimikatz.jpg" style="width: 80%;">
+</p>
+
 Next, on Windows 10 machine, go to folder **Downloads**, **extract all** file `mimikatz_trunk.zip`. Then, we open **Power Shell** as Administrator, change directory to mimikatz folder and execute `mimikatz.exe`.
+
+<p align="center">
+  <img src="./images/win10-run-mimikatz.jpg" style="width: 80%;">
+</p>
 
 To make sure **Sysmon** is capturing Mimikatz, we open **Event Viewer** and navigate to **Applications and Services Logs/Microsoft/Windows/Sysmon/Operational**. We Look for `Event ID 1`, which indicates process creation.
 
